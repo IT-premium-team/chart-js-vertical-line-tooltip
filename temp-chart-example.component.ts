@@ -3,6 +3,8 @@ interface Point {
   y: number;
 }
 
+declare var Chart;
+
 Component({
   selector: 'app-temp-chart-example',
   template: `
@@ -18,6 +20,10 @@ export class TempChartExampleComponent implements AfterVewInit {
     x: 0,
     y: 0
   };
+
+  private chart = null;
+
+  private dotRadius = 4;
 
   constructor() {}
 
@@ -36,11 +42,22 @@ export class TempChartExampleComponent implements AfterVewInit {
       draw: function(ease) {
         Chart.controllers.line.prototype.draw.call(this, ease);
 
-        that.drawLine(this.chart.ctx, that.mousePosition.x, that.mousePosition.y, this.chart.legend.bottom, this.chart.chartArea.bottom);
+        that.drawLine(
+          this.chart.ctx,
+          that.mousePosition.x,
+          that.mousePosition.y,
+          this.chart.legend.bottom,
+          this.chart.chartArea.bottom
+        );
         
         if (this.chart.tooltip._active && this.chart.tooltip._active.length) {
           this.chart.tooltip._active.forEach(point => {
-            that.drawIntersectionPoints(this.chart.ctx, point._model.x, point._model.y, 4)
+            that.drawIntersectionPoints(
+              this.chart.ctx,
+              point._model.x,
+              point._model.y,
+              that.dotRadius
+            )
           });
         }
       }
@@ -55,25 +72,24 @@ export class TempChartExampleComponent implements AfterVewInit {
       options: this.getChartOptions()
     });
 
-    this.chartRef.nativeElement.addEventListener('touchstart', (evt: TouchEvent) => {
-      if (evt.touches.length) {
-        this.mousePosition.x = evt.touches[0].clientX;
-        this.mousePosition.y = evt.touches[0].clientY;
-      }
-    });
-    this.chartRef.nativeElement.addEventListener('touchmove', (evt: TouchEvent) => {
-      if (evt.touches.length) {
-        this.mousePosition.x = evt.touches[0].clientX;
-        this.mousePosition.y = evt.touches[0].clientY;
-      }
-    });
+    this.chartRef.nativeElement.addEventListener('touchstart', that.touchEventListener);
+    this.chartRef.nativeElement.addEventListener('touchmove', that.touchEventListener);
+  }
+
+  private touchEventListener(evt: TouchEvent): void {
+    if (evt.touches.length) {
+      this.mousePosition.x = evt.touches[0].clientX;
+      this.mousePosition.y = evt.touches[0].clientY;
+    }
   }
 
   private getChartLabels() {
+    // chart labels got from processed data
     return ['a', 'b', 'c', 'd', 'e'];
   }
 
   private getDatasets() {
+    // the data got from the server side app
     return [
       {
         label: 'first',
@@ -87,6 +103,7 @@ export class TempChartExampleComponent implements AfterVewInit {
   }
 
   private getChartOptions() {
+    // the options could be added\modified conditionally
     const options = {
       tooltips: {
         mode: 'x',
@@ -121,7 +138,13 @@ export class TempChartExampleComponent implements AfterVewInit {
     return options;    
   }
 
-  private drawLine(canvas, mousePointX: number, mousePointY: number, topY: number, bottomY: number) {
+  private drawLine(
+    canvas,
+    mousePointX: number,
+    mousePointY: number,
+    topY: number,
+    bottomY: number
+  ) {
     canvas.save();
     canvas.beginPath();
     canvas.moveTo(mousePointX, topY);
@@ -132,11 +155,19 @@ export class TempChartExampleComponent implements AfterVewInit {
     canvas.restore();
   }
 
-  private drawIntersectionPoints(context, centerX: number, centerY: number, radius: number, startAngle: number = 0, endAngle: number = Math.PI*2, color: string = 'red') {
+  private drawIntersectionPoints(
+    context,
+    centerX: number,
+    centerY: number,
+    radius: number,
+    startAngle: number = 0,
+    endAngle: number = Math.PI*2,
+    color: string = 'red'
+  ) {
     context.fillStyle = color;
-		context.beginPath();
-		context.arc(centerX, centerY, radius, startAngle, endAngle, true);
-		context.closePath();
-		context.fill();
+    context.beginPath();
+    context.arc(centerX, centerY, radius, startAngle, endAngle, true);
+    context.closePath();
+    context.fill();
   }
 }
